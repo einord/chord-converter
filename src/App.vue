@@ -9,6 +9,7 @@ import type { ParsedSong } from './types'
 const inputText = ref('')
 const originalKey = ref('C')
 const transposeOffset = ref(0)
+const columns = ref(1)
 
 const parsedSong = computed<ParsedSong>(() => {
   return parseSong(inputText.value)
@@ -23,10 +24,20 @@ const parsedSong = computed<ParsedSong>(() => {
 
     <main class="app-main">
       <div class="left-panel">
-        <TransposeControls
-          v-model:originalKey="originalKey"
-          v-model:transposeOffset="transposeOffset"
-        />
+        <div class="controls-row">
+          <TransposeControls
+            v-model:originalKey="originalKey"
+            v-model:transposeOffset="transposeOffset"
+          />
+          <div class="column-controls">
+            <label for="columns">Spalter:</label>
+            <select id="columns" v-model="columns">
+              <option :value="1">1</option>
+              <option :value="2">2</option>
+              <option :value="3">3</option>
+            </select>
+          </div>
+        </div>
         <ChordEditor v-model="inputText" />
       </div>
 
@@ -34,6 +45,7 @@ const parsedSong = computed<ParsedSong>(() => {
         <ChordSheet
           :song="parsedSong"
           :transposeOffset="transposeOffset"
+          :columns="columns"
         />
       </div>
     </main>
@@ -82,6 +94,39 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+.controls-row {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+  margin-bottom: 0;
+}
+
+.controls-row > * {
+  margin-bottom: 0 !important;
+}
+
+.column-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #f5f5f5;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.column-controls label {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.column-controls select {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
 }
 
 .right-panel {

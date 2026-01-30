@@ -6,6 +6,7 @@ import { transposeSong } from '../utils/transpose'
 const props = defineProps<{
   song: ParsedSong
   transposeOffset: number
+  columns: number
 }>()
 
 const transposedSong = computed(() => {
@@ -45,6 +46,15 @@ const copyrightText = computed(() => {
   return copyright ? `\u00A9 ${copyright}` : ''
 })
 
+// Separate title section from content sections
+const titleSection = computed(() => {
+  return transposedSong.value.sections.find(s => s.type === 'title')
+})
+
+const contentSections = computed(() => {
+  return transposedSong.value.sections.filter(s => s.type !== 'title')
+})
+
 function printSheet() {
   const printContent = document.querySelector('.chord-sheet')?.innerHTML
   if (!printContent) return
@@ -60,22 +70,44 @@ function printSheet() {
       <style>
         @page {
           size: A4;
-          margin: 15mm;
+          margin: 20mm;
+        }
+        * {
+          box-sizing: border-box;
+        }
+        html, body {
+          margin: 0;
+          padding: 0;
         }
         body {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           font-size: 12pt;
           line-height: 1.4;
         }
+        .song-header {
+          margin-bottom: 5mm;
+        }
+        .song-content {
+          column-count: ${props.columns};
+          column-gap: 10mm;
+        }
+        .section {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+          -webkit-column-break-inside: avoid !important;
+          display: inline-block;
+          width: 100%;
+        }
         h1 {
           font-size: 18pt;
-          margin-bottom: 5mm;
+          margin: 0 0 3mm 0;
           text-align: center;
         }
         h2 {
           font-size: 14pt;
-          margin-top: 8mm;
-          margin-bottom: 3mm;
+          margin-top: 4mm;
+          margin-bottom: 2mm;
+          page-break-after: avoid !important;
         }
         .line {
           margin-bottom: 2mm;
@@ -102,7 +134,7 @@ function printSheet() {
           text-align: center;
           font-size: 10pt;
           color: #666;
-          margin-bottom: 5mm;
+          margin-bottom: 3mm;
         }
         .copyright-footer {
           text-align: center;
@@ -136,28 +168,37 @@ function printSheet() {
     </div>
 
     <div class="chord-sheet">
-      <template v-for="(section, sectionIndex) in transposedSong.sections" :key="sectionIndex">
-        <template v-if="section.type === 'title'">
-          <h1>{{ section.name }}</h1>
-          <div v-if="metadataDisplay" class="metadata">{{ metadataDisplay }}</div>
-        </template>
-        <h2 v-else>{{ section.name }}</h2>
+      <!-- Title and metadata outside columns -->
+      <div v-if="titleSection" class="song-header">
+        <h1>{{ titleSection.name }}</h1>
+        <div v-if="metadataDisplay" class="metadata">{{ metadataDisplay }}</div>
+      </div>
 
-        <div v-for="(line, lineIndex) in section.lines" :key="lineIndex" class="line">
-          <template v-if="line.chunks.length > 0 && (line.chunks.some(c => c.chord) || line.chunks.some(c => c.text))">
-            <span
-              v-for="(chunk, chunkIndex) in line.chunks"
-              :key="chunkIndex"
-              class="chunk"
-              :class="{ 'has-chord': chunk.chord }"
-            >
-              <span class="chord">{{ chunk.chord || '' }}</span>
-              <span class="text">{{ chunk.text }}</span>
-            </span>
-          </template>
-          <div v-else class="empty-line">&nbsp;</div>
+      <!-- Content sections in columns -->
+      <div class="song-content" :style="{ columnCount: columns }">
+        <div
+          v-for="(section, sectionIndex) in contentSections"
+          :key="sectionIndex"
+          class="section"
+        >
+          <h2>{{ section.name }}</h2>
+
+          <div v-for="(line, lineIndex) in section.lines" :key="lineIndex" class="line">
+            <template v-if="line.chunks.length > 0 && (line.chunks.some(c => c.chord) || line.chunks.some(c => c.text))">
+              <span
+                v-for="(chunk, chunkIndex) in line.chunks"
+                :key="chunkIndex"
+                class="chunk"
+                :class="{ 'has-chord': chunk.chord }"
+              >
+                <span class="chord">{{ chunk.chord || '' }}</span>
+                <span class="text">{{ chunk.text }}</span>
+              </span>
+            </template>
+            <div v-else class="empty-line">&nbsp;</div>
+          </div>
         </div>
-      </template>
+      </div>
 
       <div v-if="hasCopyright" class="copyright-footer">{{ copyrightText }}</div>
     </div>
@@ -200,6 +241,21 @@ function printSheet() {
   border-radius: 4px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 16px;
+}
+
+.song-header {
+  margin-bottom: 1rem;
+}
+
+.song-content {
+  column-gap: 2rem;
+}
+
+.section {
+  display: inline-block;
+  width: 100%;
+  page-break-inside: avoid;
+  break-inside: avoid;
 }
 
 .chord-sheet h1 {

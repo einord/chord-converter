@@ -117,6 +117,22 @@ The [Em]hour I [D]first be[G]lieved
 
 ---
 
+## Utskrift
+
+### Spalter
+
+Välj antal spalter (1-3) i menyn ovanför editorn. Vid utskrift behålls antalet spalter och varje sektion (vers, refräng etc.) hålls ihop så att den inte bryts mitt i vid sidbrytning.
+
+- **1 spalt** - Standard, bra för de flesta låtar
+- **2 spalter** - Bra för kortare verser eller sångblad
+- **3 spalter** - För kompakta utskrifter med många korta sektioner
+
+### Transponering
+
+Välj originaltonart och transponera upp eller ner. Alla ackord uppdateras automatiskt.
+
+---
+
 ## Snabbguide
 
 | Element | Syntax | Exempel |
