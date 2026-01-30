@@ -62,11 +62,13 @@ function printSheet() {
   const printWindow = window.open('', '_blank', 'width=800,height=600')
   if (!printWindow) return
 
+  const documentTitle = titleSection.value?.name || 'Ackordblad'
+
   printWindow.document.write(`
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Ackordblad</title>
+      <title>${documentTitle}</title>
       <style>
         @page {
           size: A4;
