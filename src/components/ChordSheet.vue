@@ -15,6 +15,36 @@ const transposedSong = computed(() => {
   return transposeSong(props.song, props.transposeOffset)
 })
 
+const metadataDisplay = computed(() => {
+  const metadata = props.song.metadata
+  if (!metadata) return ''
+
+  const musik = metadata.musik?.trim()
+  const text = metadata.text?.trim()
+
+  if (!musik && !text) return ''
+
+  // Check if musik and text are the same (case-insensitive)
+  if (musik && text && musik.toLowerCase() === text.toLowerCase()) {
+    return `Musik & Text: ${musik}`
+  }
+
+  const parts: string[] = []
+  if (musik) parts.push(`Musik: ${musik}`)
+  if (text) parts.push(`Text: ${text}`)
+
+  return parts.join(' | ')
+})
+
+const hasCopyright = computed(() => {
+  return !!props.song.metadata?.copyright?.trim()
+})
+
+const copyrightText = computed(() => {
+  const copyright = props.song.metadata?.copyright?.trim()
+  return copyright ? `\u00A9 ${copyright}` : ''
+})
+
 function printSheet() {
   const printContent = document.querySelector('.chord-sheet')?.innerHTML
   if (!printContent) return
@@ -68,6 +98,20 @@ function printSheet() {
         .empty-line {
           height: 4mm;
         }
+        .metadata {
+          text-align: center;
+          font-size: 10pt;
+          color: #666;
+          margin-bottom: 5mm;
+        }
+        .copyright-footer {
+          text-align: center;
+          font-size: 9pt;
+          color: #888;
+          margin-top: 10mm;
+          padding-top: 3mm;
+          border-top: 1px solid #ddd;
+        }
       </style>
     </head>
     <body>
@@ -93,7 +137,10 @@ function printSheet() {
 
     <div class="chord-sheet">
       <template v-for="(section, sectionIndex) in transposedSong.sections" :key="sectionIndex">
-        <h1 v-if="section.type === 'title'">{{ section.name }}</h1>
+        <template v-if="section.type === 'title'">
+          <h1>{{ section.name }}</h1>
+          <div v-if="metadataDisplay" class="metadata">{{ metadataDisplay }}</div>
+        </template>
         <h2 v-else>{{ section.name }}</h2>
 
         <div v-for="(line, lineIndex) in section.lines" :key="lineIndex" class="line">
@@ -111,6 +158,8 @@ function printSheet() {
           <div v-else class="empty-line">&nbsp;</div>
         </div>
       </template>
+
+      <div v-if="hasCopyright" class="copyright-footer">{{ copyrightText }}</div>
     </div>
   </div>
 </template>
@@ -191,5 +240,21 @@ function printSheet() {
 
 .empty-line {
   height: 1.5rem;
+}
+
+.metadata {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.copyright-footer {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
 }
 </style>

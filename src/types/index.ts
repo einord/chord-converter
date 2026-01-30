@@ -13,6 +13,13 @@ export interface Section {
   lines: TextLine[];
 }
 
+export interface SongMetadata {
+  musik?: string;
+  text?: string;
+  copyright?: string;
+}
+
 export interface ParsedSong {
   sections: Section[];
+  metadata?: SongMetadata;
 }

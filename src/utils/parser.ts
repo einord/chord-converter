@@ -1,4 +1,73 @@
-import type { Chunk, TextLine, Section, ParsedSong } from '../types';
+import type { Chunk, TextLine, Section, ParsedSong, SongMetadata } from '../types';
+
+/**
+ * Converts underscores to em space characters in text.
+ *
+ * @param text - The input text potentially containing underscores
+ * @returns The text with underscores replaced by em spaces
+ */
+function convertUnderscoreToEmSpace(text: string): string {
+  return text.replace(/_/g, '\u2003');
+}
+
+/**
+ * Parses frontmatter metadata from the beginning of input.
+ * Frontmatter is delimited by --- at the start and end.
+ *
+ * @param input - The raw input text potentially containing frontmatter
+ * @returns An object with optional metadata and the remaining input after frontmatter
+ */
+function parseMetadata(input: string): { metadata?: SongMetadata; remainingInput: string } {
+  const trimmedInput = input.trimStart();
+
+  // Check if input starts with frontmatter delimiter
+  if (!trimmedInput.startsWith('---')) {
+    return { remainingInput: input };
+  }
+
+  // Find the closing delimiter
+  const endDelimiterIndex = trimmedInput.indexOf('---', 3);
+  if (endDelimiterIndex === -1) {
+    return { remainingInput: input };
+  }
+
+  // Extract frontmatter content
+  const frontmatterContent = trimmedInput.slice(3, endDelimiterIndex).trim();
+  const remainingInput = trimmedInput.slice(endDelimiterIndex + 3).trimStart();
+
+  // Parse frontmatter lines
+  const metadata: SongMetadata = {};
+  const lines = frontmatterContent.split('\n');
+
+  for (const line of lines) {
+    const colonIndex = line.indexOf(':');
+    if (colonIndex === -1) continue;
+
+    const key = line.slice(0, colonIndex).trim().toLowerCase();
+    const value = line.slice(colonIndex + 1).trim();
+
+    if (!value) continue;
+
+    switch (key) {
+      case 'musik':
+        metadata.musik = value;
+        break;
+      case 'text':
+        metadata.text = value;
+        break;
+      case 'copyright':
+        metadata.copyright = value;
+        break;
+    }
+  }
+
+  // Only return metadata if at least one field was parsed
+  if (Object.keys(metadata).length === 0) {
+    return { remainingInput };
+  }
+
+  return { metadata, remainingInput };
+}
 
 /**
  * Parses a single line of text containing chord notations in [Chord] format.
@@ -26,14 +95,14 @@ function parseLine(line: string): TextLine {
   // If no chords found, return the entire line as a single chunk
   if (matches.length === 0) {
     return {
-      chunks: [{ text: line }],
+      chunks: [{ text: convertUnderscoreToEmSpace(line) }],
     };
   }
 
   // Handle text before the first chord
   if (matches[0].index > 0) {
     const textBeforeFirstChord = line.slice(0, matches[0].index);
-    chunks.push({ text: textBeforeFirstChord });
+    chunks.push({ text: convertUnderscoreToEmSpace(textBeforeFirstChord) });
   }
 
   // Build chunks by iterating through the matches
@@ -52,7 +121,7 @@ function parseLine(line: string): TextLine {
 
     chunks.push({
       chord: currentMatch.chord,
-      text: text,
+      text: convertUnderscoreToEmSpace(text),
     });
   }
 
@@ -74,7 +143,10 @@ function parseLine(line: string): TextLine {
  * @returns A ParsedSong object containing all sections with their lines and chords
  */
 export function parseSong(input: string): ParsedSong {
-  const lines = input.split('\n');
+  // Parse frontmatter metadata if present
+  const { metadata, remainingInput } = parseMetadata(input);
+
+  const lines = remainingInput.split('\n');
   const sections: Section[] = [];
   let currentSection: Section | null = null;
 
@@ -127,6 +199,7 @@ export function parseSong(input: string): ParsedSong {
   }
 
   return {
+    metadata,
     sections,
   };
 }
