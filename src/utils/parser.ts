@@ -117,7 +117,13 @@ function parseLine(line: string): TextLine {
     const textEnd = nextMatch ? nextMatch.index : line.length;
 
     // Extract the text following this chord
-    const text = line.slice(textStart, textEnd);
+    let text = line.slice(textStart, textEnd);
+
+    // If text is empty (chord at end of line), add a non-breaking space
+    // to ensure the chord is positioned correctly above the line
+    if (text === '') {
+      text = '\u00A0';
+    }
 
     chunks.push({
       chord: currentMatch.chord,
