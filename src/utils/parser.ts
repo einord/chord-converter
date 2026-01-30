@@ -119,15 +119,15 @@ function parseLine(line: string): TextLine {
     // Extract the text following this chord
     let text = line.slice(textStart, textEnd);
 
-    // If text is empty (chord at end of line), add a non-breaking space
-    // to ensure the chord is positioned correctly above the line
-    if (text === '') {
-      text = '\u00A0';
-    }
+    // If text is empty (chord followed by another chord or at end of line),
+    // add an em space after the chord for proper spacing
+    const chordWithSpacing = text === ''
+      ? currentMatch.chord + '\u2003'
+      : currentMatch.chord;
 
     chunks.push({
-      chord: currentMatch.chord,
-      text: convertUnderscoreToEmSpace(text),
+      chord: chordWithSpacing,
+      text: text === '' ? '\u00A0' : convertUnderscoreToEmSpace(text),
     });
   }
 
