@@ -1,4 +1,4 @@
-# Chord Converter
+# Ackordis
 
 En app för att skapa snygga ackordblad från enkel markdown-text.
 
