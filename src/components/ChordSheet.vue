@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ParsedSong, TextLine } from '../types'
+import type { ParsedSong } from '../types'
 import { transposeSong } from '../utils/transpose'
 
 const props = defineProps<{
@@ -14,25 +14,6 @@ const transposedSong = computed(() => {
   }
   return transposeSong(props.song, props.transposeOffset)
 })
-
-function buildChordLine(line: TextLine): string {
-  if (line.chords.length === 0) return ''
-
-  let chordLine = ''
-  let currentPos = 0
-
-  for (const chord of line.chords) {
-    // Add spaces to reach the chord position
-    while (currentPos < chord.position) {
-      chordLine += ' '
-      currentPos++
-    }
-    chordLine += chord.chord
-    currentPos += chord.chord.length
-  }
-
-  return chordLine
-}
 
 function printSheet() {
   const printContent = document.querySelector('.chord-sheet')?.innerHTML
@@ -52,7 +33,7 @@ function printSheet() {
           margin: 15mm;
         }
         body {
-          font-family: 'Courier New', monospace;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           font-size: 12pt;
           line-height: 1.4;
         }
@@ -66,16 +47,23 @@ function printSheet() {
           margin-top: 8mm;
           margin-bottom: 3mm;
         }
-        .line-group {
+        .line {
           margin-bottom: 2mm;
         }
-        .chord-line {
-          font-weight: bold;
-          white-space: pre;
-          color: #333;
+        .chunk {
+          display: inline-flex;
+          flex-direction: column;
+          align-items: flex-start;
+          vertical-align: bottom;
         }
-        .text-line {
-          white-space: pre;
+        .chunk .chord {
+          font-weight: bold;
+          color: #333;
+          font-size: 0.9em;
+          min-height: 1.2em;
+        }
+        .chunk .text {
+          white-space: pre-wrap;
         }
         .empty-line {
           height: 4mm;
@@ -108,12 +96,19 @@ function printSheet() {
         <h1 v-if="section.type === 'title'">{{ section.name }}</h1>
         <h2 v-else>{{ section.name }}</h2>
 
-        <div v-for="(line, lineIndex) in section.lines" :key="lineIndex" class="line-group">
-          <template v-if="line.text || line.chords.length > 0">
-            <div v-if="line.chords.length > 0" class="chord-line">{{ buildChordLine(line) }}</div>
-            <div class="text-line">{{ line.text || '' }}</div>
+        <div v-for="(line, lineIndex) in section.lines" :key="lineIndex" class="line">
+          <template v-if="line.chunks.length > 0 && (line.chunks.some(c => c.chord) || line.chunks.some(c => c.text))">
+            <span
+              v-for="(chunk, chunkIndex) in line.chunks"
+              :key="chunkIndex"
+              class="chunk"
+              :class="{ 'has-chord': chunk.chord }"
+            >
+              <span class="chord">{{ chunk.chord || '' }}</span>
+              <span class="text">{{ chunk.text }}</span>
+            </span>
           </template>
-          <div v-else class="empty-line"></div>
+          <div v-else class="empty-line">&nbsp;</div>
         </div>
       </template>
     </div>
@@ -154,8 +149,8 @@ function printSheet() {
   background: white;
   border: 1px solid #ccc;
   border-radius: 4px;
-  font-family: 'Courier New', monospace;
-  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
 }
 
 .chord-sheet h1 {
@@ -170,23 +165,31 @@ function printSheet() {
   color: #555;
 }
 
-.line-group {
-  margin-bottom: 0.25rem;
-}
-
-.chord-line {
-  font-weight: bold;
-  white-space: pre;
-  color: #4a90d9;
+.line {
+  margin-bottom: 0.5rem;
   line-height: 1.2;
 }
 
-.text-line {
-  white-space: pre;
-  line-height: 1.4;
+.chunk {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  vertical-align: bottom;
+}
+
+.chunk .chord {
+  font-weight: bold;
+  color: #4a90d9;
+  font-size: 0.9em;
+  min-height: 1.2em;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.chunk .text {
+  white-space: pre-wrap;
 }
 
 .empty-line {
-  height: 1rem;
+  height: 1.5rem;
 }
 </style>

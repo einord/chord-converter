@@ -1,4 +1,4 @@
-import type { ParsedSong, Section, TextLine, ChordPosition } from '../types';
+import type { ParsedSong } from '../types';
 
 // Chromatic scale using sharps as the canonical form
 const CHROMATIC_SCALE = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -141,37 +141,6 @@ export function transposeChord(chord: string, semitones: number): string {
 }
 
 /**
- * Creates a deep copy of a ChordPosition with transposed chord.
- */
-function transposeChordPosition(chordPos: ChordPosition, semitones: number): ChordPosition {
-  return {
-    chord: transposeChord(chordPos.chord, semitones),
-    position: chordPos.position,
-  };
-}
-
-/**
- * Creates a deep copy of a TextLine with transposed chords.
- */
-function transposeTextLine(line: TextLine, semitones: number): TextLine {
-  return {
-    text: line.text,
-    chords: line.chords.map(cp => transposeChordPosition(cp, semitones)),
-  };
-}
-
-/**
- * Creates a deep copy of a Section with transposed chords.
- */
-function transposeSection(section: Section, semitones: number): Section {
-  return {
-    type: section.type,
-    name: section.name,
-    lines: section.lines.map(line => transposeTextLine(line, semitones)),
-  };
-}
-
-/**
  * Transposes all chords in a ParsedSong by the specified number of semitones.
  * Creates a deep copy of the song structure to avoid mutating the original.
  * @param song - The parsed song to transpose
@@ -180,8 +149,16 @@ function transposeSection(section: Section, semitones: number): Section {
  */
 export function transposeSong(song: ParsedSong, semitones: number): ParsedSong {
   return {
-    sections: song.sections.map(section => transposeSection(section, semitones)),
-  };
+    sections: song.sections.map(section => ({
+      ...section,
+      lines: section.lines.map(line => ({
+        chunks: line.chunks.map(chunk => ({
+          ...chunk,
+          chord: chunk.chord ? transposeChord(chunk.chord, semitones) : undefined
+        }))
+      }))
+    }))
+  }
 }
 
 /**

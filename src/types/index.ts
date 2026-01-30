@@ -1,11 +1,10 @@
-export interface ChordPosition {
-  chord: string;
-  position: number; // character position in the text
+export interface Chunk {
+  chord?: string;  // The chord (if any) at this position
+  text: string;    // The text following the chord
 }
 
 export interface TextLine {
-  text: string;
-  chords: ChordPosition[];
+  chunks: Chunk[];
 }
 
 export interface Section {

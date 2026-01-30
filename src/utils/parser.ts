@@ -1,42 +1,63 @@
-import type { ChordPosition, TextLine, Section, ParsedSong } from '../types';
+import type { Chunk, TextLine, Section, ParsedSong } from '../types';
 
 /**
  * Parses a single line of text containing chord notations in [Chord] format.
- * Extracts chords and calculates their positions in the resulting clean text.
+ * Splits the line into chunks where each chunk has an optional chord and the text that follows it.
  *
  * @param line - The input line potentially containing [Chord] patterns
- * @returns A TextLine object with clean text and chord positions
+ * @returns A TextLine object with chunks
  */
 function parseLine(line: string): TextLine {
-  const chords: ChordPosition[] = [];
+  const chunks: Chunk[] = [];
   const chordPattern = /\[([^\]]+)\]/g;
 
   let match: RegExpExecArray | null;
-  let cleanText = '';
-  let lastIndex = 0;
+  const matches: { chord: string; index: number; length: number }[] = [];
 
+  // Find all chord positions and values
   while ((match = chordPattern.exec(line)) !== null) {
-    // Add text before this chord to the clean text
-    const textBefore = line.slice(lastIndex, match.index);
-    cleanText += textBefore;
-
-    // Calculate the position in the clean text where this chord appears
-    const chordPosition = cleanText.length;
-
-    chords.push({
+    matches.push({
       chord: match[1],
-      position: chordPosition,
+      index: match.index,
+      length: match[0].length,
     });
-
-    lastIndex = match.index + match[0].length;
   }
 
-  // Add any remaining text after the last chord
-  cleanText += line.slice(lastIndex);
+  // If no chords found, return the entire line as a single chunk
+  if (matches.length === 0) {
+    return {
+      chunks: [{ text: line }],
+    };
+  }
+
+  // Handle text before the first chord
+  if (matches[0].index > 0) {
+    const textBeforeFirstChord = line.slice(0, matches[0].index);
+    chunks.push({ text: textBeforeFirstChord });
+  }
+
+  // Build chunks by iterating through the matches
+  for (let i = 0; i < matches.length; i++) {
+    const currentMatch = matches[i];
+    const nextMatch = matches[i + 1];
+
+    // Calculate text start position (after the current chord marker)
+    const textStart = currentMatch.index + currentMatch.length;
+
+    // Calculate text end position (start of next chord or end of line)
+    const textEnd = nextMatch ? nextMatch.index : line.length;
+
+    // Extract the text following this chord
+    const text = line.slice(textStart, textEnd);
+
+    chunks.push({
+      chord: currentMatch.chord,
+      text: text,
+    });
+  }
 
   return {
-    text: cleanText,
-    chords,
+    chunks,
   };
 }
 
@@ -46,7 +67,7 @@ function parseLine(line: string): TextLine {
  * Format:
  * - `# Text` - Song title (type: 'title')
  * - `## Text` - Section/verse (type: 'section')
- * - `[Chord]` - Chord notation, position is preserved relative to the text
+ * - `[Chord]` - Chord notation, each chord and its following text become a chunk
  * - Line breaks are preserved
  *
  * @param input - The raw song text in markdown-like format
@@ -89,8 +110,7 @@ export function parseSong(input: string): ParsedSong {
       // Preserve empty lines as empty TextLine objects
       if (trimmedLine === '') {
         currentSection.lines.push({
-          text: '',
-          chords: [],
+          chunks: [{ text: '' }],
         });
       } else {
         currentSection.lines.push(parseLine(line));
