@@ -18,7 +18,7 @@ const parsedSong = computed<ParsedSong>(() => {
 <template>
   <div class="app-container">
     <header class="app-header">
-      <h1>Plik - Ackordformaterare</h1>
+      <h1>Ackordis</h1>
     </header>
 
     <main class="app-main">
