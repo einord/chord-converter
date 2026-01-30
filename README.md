@@ -79,11 +79,11 @@ Använd `_` för att skapa extra mellanrum (1 em per underscore). Detta är anv�
    ```
    Ger mellanrum mellan "Hej" och ackordet.
 
-3. **Skriva rader med bara ackord:**
+3. **Men det behövs inte om man bara skriver ackord efter varandra:**
    ```
-   [C]_[D]_[Em]_[G]
+   [C][D][Em][G]
    ```
-   Skapar en rad med bara ackord, snyggt separerade.
+   Skapar en rad med bara ackord, snyggt separerade utan underscore.
 
 ---
 
